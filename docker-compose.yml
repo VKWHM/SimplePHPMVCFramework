@@ -1,0 +1,24 @@
+version: '3'
+services: 
+  php-environment:
+    container_name: php-application
+    build: 
+      context: ./php
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    volumes:
+      - ./php/:/app/
+    ports:
+      - 80:8000
+    env_file:
+      - ./.env
+  db:
+    container_name: db
+    image: mysql
+    restart: always
+    env_file:
+      - ./.env
+    ports:
+      - 9906:3306
+
