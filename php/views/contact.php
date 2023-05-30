@@ -1,7 +1,7 @@
-<form method="POST" action=".">
+<form method="POST" action="/contact">
   <div class="mb-3">
     <label for="subjectField" class="form-label">Subject</label>
-    <input type="text" name="subject" class="form-control" id="subjectField">
+    <input type="text" name="subject" class="form-control" id="subjectField" value="<?php echo @$name; ?>">
   </div>
   <div class="mb-3">
     <label for="emailField" class="form-label">Email address</label>

@@ -25,16 +25,20 @@ class Router {
         }
         if (is_string($callable)) {
             return $this->renderView($callable);
-        } else {
-            return $callable();
+        } elseif (is_array($callable)) {
+            $callable[0] = new $callable[0]();
         }
+        return call_user_func($callable);
     }
-    public function renderView($view) {
+    public function renderView($view, $params = []) {
         $layoutContent = $this->layoutContent();
-        $viewContent = $this->renderViewOnly($view);
+        $viewContent = $this->renderViewOnly($view, $params);
         return str_replace("{{put_content}}", $viewContent, $layoutContent);
     }
-    public function renderViewOnly($view) {
+    public function renderViewOnly($view, $params = []) {
+        foreach ($params as $key => $value) {
+            $$key = $value;
+        }
         ob_start();
         include_once Application::getRootDirectory() . "/views/$view.php";
         return ob_get_clean();

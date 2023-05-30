@@ -1,12 +1,12 @@
 <?php
 namespace app\core;
 class Application {
-    private static $ROOT_DIR;
+    private static $root_directory;
+    private static $instance;
     public $router;
     public $request;
     public $response;
-    public function __construct($root_directory) {
-        self::$ROOT_DIR = $root_directory;
+    public function __construct() {
         $this->response = new Response();
         $this->request = new Request();
         $this->router = new Router($this->request, $this->response);
@@ -14,8 +14,15 @@ class Application {
     public function run() {
         echo $this->router->resolve();
     }
+    public static function getInstance() {
+        if (!self::$instance) {
+            self::$root_directory = dirname(__DIR__);
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
     public static function getRootDirectory() {
-        return self::$ROOT_DIR;
+        return self::$root_directory;
     }
 }
  ?>
