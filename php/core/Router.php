@@ -16,8 +16,8 @@ class Router {
         $this->routes['post'][$path] = $callable;
     }
     public function resolve() {
-        $path = $this->request->getPath();
-        $method = $this->request->getMethod();
+        $path = $this->request->path();
+        $method = $this->request->method();
         $callable = $this->routes[$method][$path] ?? false;
         if (!$callable) {
             $this->response->statusCode(404);

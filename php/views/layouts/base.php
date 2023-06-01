@@ -22,6 +22,12 @@
                             <a class="nav-link" href="/contact">Contact</a>
                         </li>
                     </ul>
+                    <div class="navbar-nav mb-2 mb-lg-0">
+                        <a href="/login" class="nav-link">Login</a>
+                    </div   >
+                    <div class="nav-item">
+                        <a href="/register" class="nav-link">Register</a>
+                    </div>
                 </div>
             </div>
         </nav>
