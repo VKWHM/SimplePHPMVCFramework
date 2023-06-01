@@ -6,6 +6,13 @@ class Application {
     public $router;
     public $request;
     public $response;
+    protected $controller;
+    public function getController() {
+        return $this->controller ?? false;
+    }
+    public function setController($instance) {
+        $this->controller = $instance;
+    }
     public function __construct() {
         $this->response = new Response();
         $this->request = new Request();

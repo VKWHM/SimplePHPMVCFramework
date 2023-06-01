@@ -1,6 +1,10 @@
 <?php
 namespace app\core;
 class Controller {
+    public string $layout = 'base';
+    public function setLayout($layout) {
+        $this->layout = $layout;
+    }
     public function render(...$params)  {
         return Application::getInstance()->router->renderView(...$params);
     }

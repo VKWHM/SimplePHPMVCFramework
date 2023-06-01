@@ -27,6 +27,7 @@ class Router {
             return $this->renderView($callable);
         } elseif (is_array($callable)) {
             $callable[0] = new $callable[0]();
+            Application::getInstance()->setController($callable[0]);
         }
         return call_user_func($callable);
     }
@@ -44,11 +45,12 @@ class Router {
         return ob_get_clean();
     }
     public function layoutContent() {
+        $controller = Application::getInstance()->getController();
+        $layout =  $controller ? $controller->layout : "base";
         ob_start();
-        include_once Application::getRootDirectory() . "/views/layouts/base.php";
+        include_once Application::getRootDirectory() . "/views/layouts/$layout.php";
         return ob_get_clean();
     }
-
 }
 
  ?>
