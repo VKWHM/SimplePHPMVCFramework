@@ -6,14 +6,37 @@ use Exception;
 class ValidateException extends Exception {}
 abstract class Model {
     private $rClass;
-    protected $hasData;
     private $methods;
-    public $errors;
 
+    protected $hasData;
     protected const RULE_REQUIRED = 'required';
     protected const RULE_EMAIL = 'email';
     protected const RULE_MIN = 'min';
     protected const RULE_MAX = 'max';
+
+    public $errors = [];
+
+    private function getAttributes() {
+        return array_filter($this->rClass->getProperties(), function ($attribute) {
+            return $attribute->class === $this->rClass->getName();
+        });
+    }
+
+    private function getMethods() {
+        return array_filter($this->rClass->getMethods(), function ($method) {
+            return $method->class === $this->rClass->getName();
+        });
+    }
+
+    private function getReflectionObjectName($arr) {
+        $Names = [];
+        foreach ($arr as $obj) {
+            $Names[] = $obj->name;
+        }
+        return $Names;
+    }
+    
+    abstract protected function rules();
 
     protected function ruleFunctions($rule) {
         return array(
@@ -48,34 +71,27 @@ abstract class Model {
         )[$rule];
     }
 
-    private function getAttributes() {
-        return array_filter($this->rClass->getAttributes(), function ($attribute) {
-            return $attribute->class === $this->rClass->getName();
-        });
-    }
-
-    private function getMethods() {
-        return array_filter($this->rClass->getMethods(), function ($method) {
-            return $method->class === $this->rClass->getName();
-        });
-    }
-
-    private function getReflectionObjectName($arr) {
-        $Names = [];
-        foreach ($arr as $obj) {
-            $Names[] = $obj->name;
-        }
-        return $Names;
-    }
-
-    abstract protected function rules();
-
     protected function addError($attribute, $error) {
         $this->errors[$attribute][] = $error;
     }
 
     public function __construct() {
         $this->rClass = new ReflectionClass($this);
+    }
+
+    public function attributes() {
+        return $this->getReflectionObjectName($this->getAttributes());
+    }
+
+    public function hasError($attribute) {
+        return array_key_exists($attribute, $this->errors);
+    }
+
+    public function getError($attribute) {
+        if (array_key_exists($attribute, $this->errors)) {
+            return $this->errors[$attribute][0];
+        }
+        return '';
     }
 
     public function loadData(array $data) {
@@ -95,8 +111,8 @@ abstract class Model {
         $attributes = $this->getAttributes();
         $methods = $this->getReflectionObjectName($this->getMethods());
         foreach($attributes as $attribute) {
-            $rule = @$this->rules()[$attribute->name];
-            if ($rule) {
+            $rules = @$this->rules()[$attribute->name] ?? [];
+            foreach ($rules as $rule) {
                 $error = is_array($rule)
                     ? $this->ruleFunctions($rule[0])($attribute->name, ...array_slice($rule, 1))
                     : $this->ruleFunctions($rule)($attribute->name);

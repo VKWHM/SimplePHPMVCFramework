@@ -14,19 +14,14 @@ class AuthController extends Controller {
 
     }
     public function register() {
+        $registerModel = new RegisterModel();
         if ($this->getRequest()->isPost()) {
-            $registerModel = new RegisterModel();
             $registerModel->loadData($this->getRequest()->body());
-            if (!$registerModel->validate()) {
-                foreach ($registerModel->errors as $field => $errors) {
-                    echo $field . '<br>';
-                    foreach($errors as $error) {
-                        echo $error;
-                    } // end for
-                } // end for
+            if ($registerModel->validate()) {
+                return 'Success';
             } // end if
         } // end if
-        return $this->render('register');
+        return $this->render('register', ['model' => $registerModel]);
     }
 }
  ?>

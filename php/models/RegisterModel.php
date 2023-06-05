@@ -4,15 +4,16 @@ namespace app\models;
 use app\core\Model;
 use app\core\ValidateException;
 class RegisterModel extends Model {
-    public string $username;
-    public string $email;
-    public string $password;
-    public string $confirmPassword;
+    public string $username = '';
+    public string $email = '';
+    public string $password = '';
+    public string $confirmPassword = '';
     protected function rules() {
         return [
-            'username' => self::RULE_REQUIRED,
-            'email' => self::RULE_EMAIL,
-            'password' => [self::RULE_MIN, 'min' => 6],
+            'username' => [self::RULE_REQUIRED],
+            'email' => [self::RULE_REQUIRED, self::RULE_EMAIL],
+            'password' => [self::RULE_REQUIRED, [self::RULE_MIN, 'min' => 6]],
+            'confirmPassword' => [self::RULE_REQUIRED]
         ];
     }
     public function val_confirmPassword() {
