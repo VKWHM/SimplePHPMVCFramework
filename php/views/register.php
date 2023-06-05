@@ -13,7 +13,7 @@
     <input name="password" class="form-control" id="password" type="password">
   </div>
   <div class="mb-3">
-    <label for="confimPassword" class="form-label">Password</label>
+    <label for="confimPassword" class="form-label">Confirm Password</label>
     <input name="confirmPassword" class="form-control" id="confirmPassword" type="password">
   </div>
   <button type="submit" class="btn btn-primary">Register</button>

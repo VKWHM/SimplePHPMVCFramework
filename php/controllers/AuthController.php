@@ -1,6 +1,7 @@
 <?php
 namespace app\controllers;
 use app\core\Controller;
+use app\models\RegisterModel;
 class AuthController extends Controller {
     public function __construct() {
         $this->setLayout('auth');
@@ -14,8 +15,17 @@ class AuthController extends Controller {
     }
     public function register() {
         if ($this->getRequest()->isPost()) {
-            return "Handle post data";
-        }
+            $registerModel = new RegisterModel();
+            $registerModel->loadData($this->getRequest()->body());
+            if (!$registerModel->validate()) {
+                foreach ($registerModel->errors as $field => $errors) {
+                    echo $field . '<br>';
+                    foreach($errors as $error) {
+                        echo $error;
+                    } // end for
+                } // end for
+            } // end if
+        } // end if
         return $this->render('register');
     }
 }
