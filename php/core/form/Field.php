@@ -13,16 +13,13 @@ class Field {
             $this->$key = $value;
         }
     }
-    public function fieldLabel($classes = []) {
+    public function fieldLabel(...$classes) {
         echo sprintf('
             <label for="%s" class="%s">%s</label>
-        ',$this->name, is_string($classes) ? $classes : join(" ", $classes), $this->label);
+        ',$this->name, join(" ", $classes), $this->label);
     }
-    public function fieldInput($classes = []) {
+    public function fieldInput(...$classes) {
         if ($this->model->hasError($this->name)) {
-            if (is_string($classes)) {
-                $classes = array($classes);
-            }
             $classes[] = 'is-invalid';
             $errorDiv = sprintf('
                 <div class="invalid-feedback">
@@ -33,7 +30,7 @@ class Field {
         echo sprintf('
             <input id="%s" name="%s" class="%s" type="%s" value="%s">
             %s
-        ',$this->name, $this->name, is_string($classes) ? $classes : join(" ", $classes), $this->type, $this->model->{$this->name}, @$errorDiv ?? '');
+        ',$this->name, $this->name, join(" ", $classes), $this->type, $this->model->{$this->name}, @$errorDiv ?? '');
 
     }
 }
