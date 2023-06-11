@@ -23,9 +23,9 @@ class Application {
     public function run() {
         echo $this->router->resolve();
     }
-    public static function getInstance(...$params) {
+    public static function getInstance($cwd = '', ...$params) {
         if (!self::$instance) {
-            self::$root_directory = dirname(__DIR__);
+            self::$root_directory = $cwd;
             self::$instance = new self(...$params);
         }
         return self::$instance;

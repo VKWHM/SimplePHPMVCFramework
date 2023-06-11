@@ -15,7 +15,7 @@ $config = array(
     ]
 );
 
-$app = Application::getInstance($config);
+$app = Application::getInstance(dirname(__DIR__), $config);
 $app->router->get('/', "home");
 
 $app->router->get('/contact', "contact");
