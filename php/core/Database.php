@@ -10,6 +10,18 @@ class Database {
         $this->pdo = new \PDO($dsn, $user, $password);
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
     }
+    public function tableColumns($table) : array {
+        $stmt = $this->pdo->query("select column_name from information_schema.columns where table_name = '$table' and table_schema = database();");
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN);
+    }
+
+    public function getCount($sql, $params) {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->rowCount();
+    }
+
     public function applyMigrations() {
         $this->createMigrationsTable();
         $appliedMigrations = $this->getAppliedMigrations();

@@ -7,12 +7,15 @@ class ValidateException extends Exception {}
 abstract class Model {
     private $rClass;
     private $methods;
+    private $columns;
 
-    protected $hasData;
+    protected $hasData = False;
+    protected $validated = False;
     protected const RULE_REQUIRED = 'required';
     protected const RULE_EMAIL = 'email';
     protected const RULE_MIN = 'min';
     protected const RULE_MAX = 'max';
+    protected const RULE_UNIQUE = 'unique';
 
     public $errors = [];
 
@@ -35,7 +38,7 @@ abstract class Model {
         }
         return $Names;
     }
-    
+
     abstract protected function rules();
 
     protected function ruleFunctions($rule) {
@@ -67,6 +70,15 @@ abstract class Model {
                 } else {
                     return False;
                 }
+            },
+            self::RULE_UNIQUE => function ($attribute, $class, $column) {
+                $instance = new $class();
+                $table = $instance->tableName();
+                $sql = "SELECT * FROM $table WHERE $column = ?;";
+                if (Application::getInstance()->db->getCount($sql, [$this->{$attribute}]) === 0) {
+                    return false;
+                }
+                return "This field must be unique";
             }
         )[$rule];
     }
@@ -77,7 +89,10 @@ abstract class Model {
 
     public function __construct() {
         $this->rClass = new ReflectionClass($this);
+        $this->columns = Application::getInstance()->db->tableColumns($this->tableName());
     }
+
+    abstract function tableName() : string;
 
     public function attributes() {
         return $this->getReflectionObjectName($this->getAttributes());
@@ -103,6 +118,7 @@ abstract class Model {
                 } // end if
             } // end for
             $this->hasData = true;
+            $this->validated = false;
         }// end if
     }
 
@@ -129,7 +145,30 @@ abstract class Model {
                 } // end try
             } // end if
         } // end for
+        $this->validated = true;
         return empty($this->errors);
+    }
+    public function isValid() {
+        return $this->validated && empty($this->errors);
+
+    }
+    public function save() {
+        if (!$this->isValid()) return false;
+        try {
+            $attrs = array_intersect($this->attributes(), $this->columns);
+            $params = array_map(fn($item) => ":$item", $attrs);
+            $stmt = Application::getInstance()->db->pdo->prepare(
+                "INSERT INTO ". $this->tableName() ." (". implode(", ", $attrs) .") VALUES (". implode(", ", $params) .");"
+            );
+            foreach ($attrs as $attr) {
+                $stmt->bindValue(":$attr", $this->{$attr});
+            }
+            $stmt->execute();
+            return true;
+        } catch(Exception $e) {
+            return false;
+        }
+
     }
 }
  ?>
