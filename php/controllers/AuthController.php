@@ -7,7 +7,7 @@ class AuthController extends Controller {
         $this->setLayout('auth');
     }
     public function login() {
-        if ($this->getRequest()->isPost()) {
+        if ($this->request->isPost()) {
             return "Handle post data";
         }
         return $this->render('login');
@@ -15,10 +15,12 @@ class AuthController extends Controller {
     }
     public function register() {
         $registerModel = new RegisterModel();
-        if ($this->getRequest()->isPost()) {
-            $registerModel->loadData($this->getRequest()->body());
+
+        if ($this->request->isPost()) {
+            $registerModel->loadData($this->request->body());
             if ($registerModel->validate() && $registerModel->save()) {
-                return 'Success';
+                $this->session->setFlash("success", "Thanks for registering");
+                $this->response->redirect("/");
             } // end if
         } // end if
         return $this->render('register', ['model' => $registerModel]);

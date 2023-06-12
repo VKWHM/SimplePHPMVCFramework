@@ -6,6 +6,7 @@ class Application {
     public $router;
     public $request;
     public $response;
+    public $session;
     public $db;
     protected $controller;
     public function getController() {
@@ -15,6 +16,7 @@ class Application {
         $this->controller = $instance;
     }
     public function __construct(array $config) {
+        $this->session = new Session();
         $this->response = new Response();
         $this->request = new Request();
         $this->router = new Router($this->request, $this->response);
