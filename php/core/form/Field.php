@@ -6,6 +6,7 @@ class Field {
     public $name = '';
     public $label = '';
     public $type = 'text';
+    public $value = '';
     public function __construct($model, $name, array $options) {
         $this->model = $model;
         $this->name = $name;
@@ -30,7 +31,7 @@ class Field {
         echo sprintf('
             <input id="%s" name="%s" class="%s" type="%s" value="%s">
             %s
-        ',$this->name, $this->name, join(" ", $classes), $this->type, $this->model->{$this->name}, @$errorDiv ?? '');
+        ',$this->name, $this->name, join(" ", $classes), $this->type, @$this->value ?? '', @$errorDiv ?? '');
 
     }
 }

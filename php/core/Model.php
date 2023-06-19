@@ -8,166 +8,66 @@ abstract class Model {
     private $rClass;
     private $methods;
     private $columns;
+    abstract public function tableName();
+    abstract public function primaryKey();
 
-    protected $hasData = False;
-    protected $validated = False;
-    protected const RULE_REQUIRED = 'required';
-    protected const RULE_EMAIL = 'email';
-    protected const RULE_MIN = 'min';
-    protected const RULE_MAX = 'max';
-    protected const RULE_UNIQUE = 'unique';
+    public $attrs;
 
-    public $errors = [];
+    public function filter(array $params) {
+        $table = $this->tableName();
+        $conditions = implode("AND ", array_map(fn($attr) => "$attr = :$attr", array_keys($params)));
+        $sql = "SELECT * FROM $table WHERE $conditions;";
+        $stmt = Application::getInstance()->db->pdo->prepare($sql);
+        $stmt->execute($params);
+        if (!$stmt->rowCount()) {
+            return false;
+        }
+        return $stmt->fetchObject(static::class);
+    }
 
-    private function getAttributes() {
-        return array_filter($this->rClass->getProperties(), function ($attribute) {
+    private function attributes() {
+        $attrs =  array_filter($this->rClass->getProperties(), function ($attribute) {
             return $attribute->class === $this->rClass->getName();
         });
+        return array_map(fn($attr) => $attr->name, $attrs);
     }
-
     private function getMethods() {
-        return array_filter($this->rClass->getMethods(), function ($method) {
+        $methods = array_filter($this->rClass->getMethods(), function ($method) {
             return $method->class === $this->rClass->getName();
         });
+        return array_map(fn($method) => $method->name, $methods);
     }
 
-    private function getReflectionObjectName($arr) {
-        $Names = [];
-        foreach ($arr as $obj) {
-            $Names[] = $obj->name;
-        }
-        return $Names;
-    }
-
-    abstract protected function rules();
-
-    protected function ruleFunctions($rule) {
-        return array(
-            self::RULE_REQUIRED => function ($attribute) {
-                if ($this->$attribute === null || !$this->$attribute || empty($this->$attribute)) {
-                    return "This field is required";
-                } else {
-                    return False;
-                }
-            },
-            self::RULE_EMAIL => function ($attribute) {
-                if (!filter_var($this->$attribute, FILTER_VALIDATE_EMAIL)) {
-                    return "This field must be valid email address";
-                } else {
-                    return False;
-                }
-            },
-            self::RULE_MAX => function ($attribute, $max) {
-                if (strlen($this->$attribute) > $max) {
-                    return "Maximum length of this field must be $max";
-                } else {
-                    return False;
-                }
-            },
-            self::RULE_MIN => function ($attribute, $min) {
-                if (strlen($this->$attribute) < $min) {
-                    return "Maximum length of this field must be $min";
-                } else {
-                    return False;
-                }
-            },
-            self::RULE_UNIQUE => function ($attribute, $class, $column) {
-                $instance = new $class();
-                $table = $instance->tableName();
-                $sql = "SELECT * FROM $table WHERE $column = ?;";
-                if (Application::getInstance()->db->getCount($sql, [$this->{$attribute}]) === 0) {
-                    return false;
-                }
-                return "This field must be unique";
-            }
-        )[$rule];
-    }
-
-    protected function addError($attribute, $error) {
-        $this->errors[$attribute][] = $error;
-    }
 
     public function __construct() {
         $this->rClass = new ReflectionClass($this);
         $this->columns = Application::getInstance()->db->tableColumns($this->tableName());
     }
 
-    abstract function tableName() : string;
-
-    public function attributes() {
-        return $this->getReflectionObjectName($this->getAttributes());
-    }
-
-    public function hasError($attribute) {
-        return array_key_exists($attribute, $this->errors);
-    }
-
-    public function getError($attribute) {
-        if (array_key_exists($attribute, $this->errors)) {
-            return $this->errors[$attribute][0];
-        }
-        return '';
-    }
-
-    public function loadData(array $data) {
-        $attributes = $this->getReflectionObjectName($this->getAttributes());
-        if (!empty($data)) {
-            foreach ($data as $key => $value) {
-                if (in_array($key, $attributes)) {
-                    $this->$key = $value;
-                } // end if
-            } // end for
-            $this->hasData = true;
-            $this->validated = false;
-        }// end if
-    }
-
-    public function validate() {
-        if (!$this->hasData) return false;
-        $attributes = $this->getAttributes();
-        $methods = $this->getReflectionObjectName($this->getMethods());
-        foreach($attributes as $attribute) {
-            $rules = @$this->rules()[$attribute->name] ?? [];
-            foreach ($rules as $rule) {
-                $error = is_array($rule)
-                    ? $this->ruleFunctions($rule[0])($attribute->name, ...array_slice($rule, 1))
-                    : $this->ruleFunctions($rule)($attribute->name);
-                if ($error) {
-                    $this->addError($attribute->name, $error);
-                }
+    public function load(array $data) {
+        foreach ($data as $key => $value) {
+            if (in_array($key, $this->columns)) {
+                $this->$key = $value;
+                $this->attrs[] = $key;
             }
-            $methodName = "val_" . $attribute->name;
-            if (in_array($methodName, $methods)) {
-                try {
-                    $this->$methodName();
-                } catch(ValidateException $e) {
-                    $this->addError($attribute->name, $e->getMessage());
-                } // end try
-            } // end if
-        } // end for
-        $this->validated = true;
-        return empty($this->errors);
+        }
     }
-    public function isValid() {
-        return $this->validated && empty($this->errors);
 
-    }
     public function save() {
-        if (!$this->isValid()) return false;
-        try {
-            $attrs = array_intersect($this->attributes(), $this->columns);
+        $attrs = $this->attrs;
+        // try {
             $params = array_map(fn($item) => ":$item", $attrs);
             $stmt = Application::getInstance()->db->pdo->prepare(
                 "INSERT INTO ". $this->tableName() ." (". implode(", ", $attrs) .") VALUES (". implode(", ", $params) .");"
-            );
+            )   ;
             foreach ($attrs as $attr) {
                 $stmt->bindValue(":$attr", $this->{$attr});
             }
             $stmt->execute();
             return true;
-        } catch(Exception $e) {
-            return false;
-        }
+        // } catch(Exception $e) {
+        //     return false;
+        // }
 
     }
 }
